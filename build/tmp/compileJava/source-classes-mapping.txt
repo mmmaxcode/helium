@@ -1,0 +1,13 @@
+club/max/events/test/TestEvent.java
+ club.max.events.test.TestEvent
+club/max/events/dispatch/Event.java
+ club.max.events.dispatch.Event
+club/max/events/dispatch/Subscriber.java
+ club.max.events.dispatch.Subscriber
+club/max/events/dispatch/EventHandler.java
+ club.max.events.dispatch.EventHandler
+ club.max.events.dispatch.EventHandler$RegisteredMethod
+club/max/events/test/Test2.java
+ club.max.events.test.Test2
+club/max/events/test/Main.java
+ club.max.events.test.Main

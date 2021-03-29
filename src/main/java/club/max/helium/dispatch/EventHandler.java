@@ -51,7 +51,7 @@ public class EventHandler <T> {
      * Dispatch an event
      * @param event event
      */
-    void dispatchEvent(T event){
+    public void dispatch(T event) {
         logger.info("Dispatching event");
         for (Map.Entry<Object, List<RegisteredMethod<T>>> entry : listeners.entrySet()) {
             for (RegisteredMethod<T> registeredMethod : entry.getValue()) {
@@ -68,19 +68,11 @@ public class EventHandler <T> {
     }
 
     /**
-     * Dispatch an event
-     * @param event event
-     */
-    public void dispatch(T event){
-        dispatchEvent(event);
-    }
-
-    /**
      * Dispatches an event synchronously
      * @param event event
      */
     public void dispatchSync(T event) {
-        service.submit(() -> dispatchEvent(event));
+        service.submit(() -> dispatch(event));
     }
 
     /**
@@ -101,7 +93,7 @@ public class EventHandler <T> {
     /**
      * @return caching?
      */
-    public boolean isCaching() {
+    public boolean caching() {
         return caching;
     }
 
@@ -109,7 +101,7 @@ public class EventHandler <T> {
      * Set if caching
      * @param caching caching?
      */
-    public void setCaching(boolean caching) {
+    public void caching(boolean caching) {
         this.caching = caching;
     }
 
@@ -117,7 +109,7 @@ public class EventHandler <T> {
      * Set executor thread count and creates new thread pool
      * @param threadCount thread count
      */
-    public void setThreadCount(int threadCount) {
+    public void threadCount(int threadCount) {
         this.threadCount = threadCount;
         service = Executors.newFixedThreadPool(threadCount);
     }
@@ -125,14 +117,14 @@ public class EventHandler <T> {
     /**
      * @return thread count
      */
-    public int getThreadCount() {
+    public int threadCount() {
         return threadCount;
     }
 
     /**
      * @return listeners hashmap
      */
-    public HashMap<Object, List<RegisteredMethod<T>>> getListeners() {
+    public HashMap<Object, List<RegisteredMethod<T>>> listeners() {
         return listeners;
     }
 
@@ -140,7 +132,7 @@ public class EventHandler <T> {
      * Sets listeners
      * @param listeners listeners hashmap
      */
-    public void setListeners(HashMap<Object, List<RegisteredMethod<T>>> listeners) {
+    public void listeners(HashMap<Object, List<RegisteredMethod<T>>> listeners) {
         this.listeners = listeners;
     }
 
@@ -148,14 +140,14 @@ public class EventHandler <T> {
      * Sets logger
      * @param logger logger
      */
-    public void setLogger(Logger logger) {
+    public void logger(Logger logger) {
         this.logger = logger;
     }
 
     /**
      * @return logger
      */
-    public Logger getLogger() {
+    public Logger logger() {
         return logger;
     }
 

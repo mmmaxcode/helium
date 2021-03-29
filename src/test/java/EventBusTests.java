@@ -25,9 +25,9 @@ public class EventBusTests {
 
     @Test
     public void testDispatchCount() {
-        eventBus.setThreadCount(1);
+        eventBus.threadCount(1);
         LogHandler handler = new LogHandler();
-        eventBus.getLogger().addHandler(handler);
+        eventBus.logger().addHandler(handler);
 
         eventBus.open(this);
         for (int i = 0; i < 10; i++) {
@@ -39,9 +39,9 @@ public class EventBusTests {
 
     @Test
     public void testDispatchLog() {
-        eventBus.setThreadCount(1);
+        eventBus.threadCount(1);
         LogHandler handler = new LogHandler();
-        eventBus.getLogger().addHandler(handler);
+        eventBus.logger().addHandler(handler);
 
         eventBus.open(this);
         eventBus.dispatch(new TestEvent());
@@ -51,10 +51,10 @@ public class EventBusTests {
 
     @Test
     public void testDispatchLogSilent() {
-        eventBus.setThreadCount(1);
+        eventBus.threadCount(1);
         LogHandler handler = new LogHandler();
-        eventBus.getLogger().addHandler(handler);
-        eventBus.getLogger().setLevel(Level.OFF);
+        eventBus.logger().addHandler(handler);
+        eventBus.logger().setLevel(Level.OFF);
 
         eventBus.open(this);
         eventBus.dispatch(new TestEvent());
@@ -64,7 +64,7 @@ public class EventBusTests {
 
     @Test
     public void testDispatchDisable() {
-        eventBus.setThreadCount(1);
+        eventBus.threadCount(1);
         eventBus.open(this);
         eventBus.dispatch(new TestEvent());
         eventBus.close(this);
@@ -78,8 +78,8 @@ public class EventBusTests {
     public void benchmark() {
         int events = 50000000;
 
-        eventBus.setThreadCount(1);
-        eventBus.getLogger().setLevel(Level.OFF);
+        eventBus.threadCount(1);
+        eventBus.logger().setLevel(Level.OFF);
         eventBus.open(this);
         long startTime = System.currentTimeMillis();
         for (int i = 0; i < events; i++) {

@@ -3,6 +3,7 @@ package club.max.helium.test;
 import club.max.helium.dispatch.Event;
 import club.max.helium.dispatch.EventHandler;
 import club.max.helium.dispatch.Subscriber;
+import java.util.logging.Level;
 
 public class Main {
 
@@ -14,8 +15,8 @@ public class Main {
 
         int registeredItems = 100;
 
-        EventHandler<Event> EVENT_BUS = EventHandler.getSystemEventDispatcher();
-        EVENT_BUS.setDebug(false);
+        EventHandler<Event> EVENT_BUS = EventHandler.SYSTEM_EVENT_DISPATCHER;
+        EVENT_BUS.getLogger().setLevel(Level.OFF);
         EVENT_BUS.setThreadCount(1);
 
         long startTime = System.currentTimeMillis();
@@ -46,8 +47,7 @@ public class Main {
 
     @Subscriber
     public void onDispatch(TestEvent event){
-        dispatched ++;
+        dispatched++;
     }
-
 
 }

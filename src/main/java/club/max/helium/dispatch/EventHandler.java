@@ -2,137 +2,63 @@ package club.max.helium.dispatch;
 
 import com.esotericsoftware.reflectasm.MethodAccess;
 
-import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class EventHandler <T>{
-    private static final EventHandler<Event> SYSTEM_EVENT_DISPATCHER = new EventHandler<Event>();
+public class EventHandler <T> {
 
-    /**
-     * This returns the system event dispatcher
-     * @return
-     */
-
-    public static EventHandler<Event> getSystemEventDispatcher() { return SYSTEM_EVENT_DISPATCHER; }
-
-    boolean debug = false;
-
-    /**
-     * This is whether or not it prints out what is going on
-     * @return
-     */
-
-    public boolean isDebug() {
-        return debug;
-    }
-
-    /**
-     * This sets whether or not it prints out what is going on
-     * @return
-     */
-
-    public void setDebug(boolean debug) {
-        this.debug = debug;
-    }
-
-    PrintStream out = System.out;
-
-    boolean caching = true;
-
-    /**
-     * This is whether or not it saves unregistered classes information to a cache
-     * @return
-     */
-
-    public boolean isCaching() {
-        return caching;
-    }
-
-    /**
-     * This sets whether or not it saves unregistered classes information to a cache
-     * @return
-     */
-
-    public void setCaching(boolean caching) {
-        this.caching = caching;
-    }
-
-    int threadCount = 5;
-
-    public void setThreadCount(int threadCount) {
-        this.threadCount = threadCount;
-        service = Executors.newFixedThreadPool(threadCount);
-    }
-
-    public int getThreadCount() {
-        return threadCount;
-    }
-
-    private PrintStream stream = System.out;
-
-    public PrintStream getStream() {
-        return stream;
-    }
-
-    public void setStream(PrintStream stream) {
-        this.stream = stream;
-    }
-
-    HashMap<Object, ArrayList<RegisteredMethod>> listeners = new HashMap<>();
-
-    public HashMap<Object, ArrayList<RegisteredMethod>> getListeners() {
-        return listeners;
-    }
-
-    public void setListeners(HashMap<Object, ArrayList<RegisteredMethod>> listeners) {
-        this.listeners = listeners;
-    }
-
+    /** System's event dispatcher */
+    public static final EventHandler<Event> SYSTEM_EVENT_DISPATCHER = new EventHandler<>();
+    /** Caching unregistered classes */
+    private boolean caching = true;
+    /** Logger */
+    private Logger logger = Logger.getLogger("Helium");
+    /** Listeners hash map */
+    private HashMap<Object, List<RegisteredMethod<T>>> listeners = new HashMap<>();
+    /** Executor thread count, default of 5 */
+    private int threadCount = 5;
+    /** Executor thread pool */
     private ExecutorService service = Executors.newFixedThreadPool(threadCount);
-    public void shutdown() { service.shutdown(); }
 
-    public void open(Object o){
+    /**
+     * Registers all the listeners in an object
+     * @param o listener object
+     */
+    public void open(Object o) {
 
         List<Method> methods = Arrays.stream(o.getClass().getDeclaredMethods())
                 .filter(it -> it.isAnnotationPresent(Subscriber.class))
-      //          .filter(it -> it.getParameterCount() == 1 && it.getParameterTypes()[0].getSuperclass().isAssignableFrom())
                 .collect(Collectors.toList());
 
-        ArrayList<RegisteredMethod> registeredMethods = new ArrayList<>();
+        List<RegisteredMethod<T>> registeredMethods = new ArrayList<>();
 
         for (Method method : methods) {
+            logger.info("Registered item");
 
-            if (debug){
-                out.println("{EVENT} Registered item");
-            }
+            @SuppressWarnings("unchecked")
             Class<? extends T> eventClass = (Class<? extends T>) method.getParameterTypes()[0];
 
-
-            registeredMethods.add(new RegisteredMethod(eventClass, MethodAccess.get(o.getClass()), method.getName()));
+            registeredMethods.add(new RegisteredMethod<T>(eventClass, MethodAccess.get(o.getClass()), method.getName()));
         }
         listeners.put(o, registeredMethods);
     }
 
-    public void close(Object o){
-        listeners.remove(o);
-    }
-
-    void dispatchEvent(T event){
-        if (debug){
-            out.println("{EVENT} Dispatching event");
-        }
-        for (Map.Entry<Object, ArrayList<RegisteredMethod>> entry : listeners.entrySet()){
-            for (RegisteredMethod registeredMethod : entry.getValue()){
-                if (registeredMethod.getEvent() == event.getClass()){
+    /**
+     * Dispatch an event
+     * @param event event
+     */
+    public void dispatch(T event) {
+        logger.info("Dispatching event");
+        for (Map.Entry<Object, List<RegisteredMethod<T>>> entry : listeners.entrySet()) {
+            for (RegisteredMethod<T> registeredMethod : entry.getValue()) {
+                if (registeredMethod.event == event.getClass()) {
                     try {
-                        registeredMethod.getMethod().invoke(entry.getKey(), registeredMethod.getMethodName(), event);
-                        if (debug){
-                            out.println("{EVENT} Dispatched event");
-                        }
+                        registeredMethod.method.invoke(entry.getKey(), registeredMethod.name, event);
+                        logger.info("Dispatched event");
                     } catch (Exception exception) {
                         exception.printStackTrace();
                     }
@@ -141,34 +67,88 @@ public class EventHandler <T>{
         }
     }
 
-    public void dispatch(T event){
-        dispatchEvent(event);
-    }
-
+    /**
+     * Dispatches an event synchronously
+     * @param event event
+     */
     public void dispatchSync(T event) {
-        service.submit(() -> dispatchEvent(event));
+        service.submit(() -> dispatch(event));
     }
 
-    public class RegisteredMethod {
-        Class<? extends T> event;
-        MethodAccess method;
-        String methodName;
-        public RegisteredMethod(Class<? extends T> event, MethodAccess method, String methodName){
-            this.event = event;
-            this.method = method;
-            this.methodName = methodName;
-        }
-
-        public Class<? extends T> getEvent() {
-            return event;
-        }
-
-        public MethodAccess getMethod() {
-            return method;
-        }
-
-        public String getMethodName() {
-            return methodName;
-        }
+    /**
+     * Remove a listener
+     * @param o listener
+     */
+    public void close(Object o){
+        listeners.remove(o);
     }
+
+    /**
+     * Shutdown executor thread pool
+     */
+    public void shutdown() {
+        service.shutdown();
+    }
+
+    /**
+     * @return caching?
+     */
+    public boolean caching() {
+        return caching;
+    }
+
+    /**
+     * Set if caching
+     * @param caching caching?
+     */
+    public void caching(boolean caching) {
+        this.caching = caching;
+    }
+
+    /**
+     * Set executor thread count and creates new thread pool
+     * @param threadCount thread count
+     */
+    public void threadCount(int threadCount) {
+        this.threadCount = threadCount;
+        service = Executors.newFixedThreadPool(threadCount);
+    }
+
+    /**
+     * @return thread count
+     */
+    public int threadCount() {
+        return threadCount;
+    }
+
+    /**
+     * @return listeners hashmap
+     */
+    public HashMap<Object, List<RegisteredMethod<T>>> listeners() {
+        return listeners;
+    }
+
+    /**
+     * Sets listeners
+     * @param listeners listeners hashmap
+     */
+    public void listeners(HashMap<Object, List<RegisteredMethod<T>>> listeners) {
+        this.listeners = listeners;
+    }
+
+    /**
+     * Sets logger
+     * @param logger logger
+     */
+    public void logger(Logger logger) {
+        this.logger = logger;
+    }
+
+    /**
+     * @return logger
+     */
+    public Logger logger() {
+        return logger;
+    }
+
 }
